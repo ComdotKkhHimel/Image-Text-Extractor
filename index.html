@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Image Text Copy</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+    #output { white-space: pre-wrap; border: 1px solid #ccc; padding: 1rem; min-height: 100px; margin-top: 1rem; background: #f9f9f9; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Upload Image to Extract Text</h1>
+  <input type="file" id="imageInput" accept="image/*"><br>
+  <div id="output">Text will appear here...</div>
+  <button onclick="copyText()">Copy Text</button>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const output = document.getElementById('output');
+
+    imageInput.addEventListener('change', async () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      output.textContent = 'Processing...';
+
+      const res = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      output.textContent = data.text || 'No text found.';
+    });
+
+    function copyText() {
+      const text = output.textContent;
+      navigator.clipboard.writeText(text).then(() => alert('Text copied!'));
+    }
+  </script>
+</body>
+</html>
