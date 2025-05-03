@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Image Text Extractor</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ece9e6, #ffffff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+    input[type="file"] {
+      display: block;
+      margin: 0 auto 1rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    #output {
+      white-space: pre-wrap;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #f9f9f9;
+      min-height: 150px;
+      margin-top: 1rem;
+      color: #444;
+      font-size: 1rem;
+    }
+    .btn {
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #357abd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Smart Image Text Extractor</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <div id="output">Extracted text will appear here...</div>
+    <button class="btn" onclick="copyText()">Copy Text</button>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const output = document.getElementById('output');
+
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      output.textContent = 'Processing...';
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        Tesseract.recognize(reader.result, 'eng', {
+          logger: m => console.log(m)
+        }).then(({ data: { text } }) => {
+          output.textContent = text;
+        }).catch(err => {
+          output.textContent = 'Error: ' + err.message;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function copyText() {
+      const text = output.textContent;
+      navigator.clipboard.writeText(text).then(() => alert('Text copied!'));
+    }
+  </script>
+</body>
+</html>
