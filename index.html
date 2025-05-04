@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Image Text Extractor</title>
+<style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+    }
+    h1, #output, #loading, label, input {
+      color: #00ff00;
+      text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    }
+    input[type="file"] {
+      background-color: #111;
+      border: 1px solid #00ff00;
+      padding: 6px;
+      border-radius: 5px;
+      color: #00ff00;
+    }
+    #output {
+      border-color: #00ff00;
+    }
+    img#preview {
+      border-color: #00ff00;
+    }
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #output {
+      #00ff00-space: pre-wrap;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      min-height: 100px;
+    }
+    #loading {
+      color: #00ff00 !important;
+    
+      font-size: 18px;
+      color: #007bff;
+      animation: pulse 1.2s infinite;
+    
+      font-weight: bold;
+      margin-top: 20px;
+      display: none;
+    }
+    #preview {
+      max-width: 100%;
+      margin-top: 20px;
+      display: none;
+      border: 1px solid #aaa;
+    }
+  
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+    
+    .flicker {
+      animation: flicker 1.5s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        opacity: 1;
+      }
+      20%, 24%, 55% {
+        opacity: 0.3;
+      }
+    }
+
+    .terminal-cursor::after {
+      content: "_";
+      animation: blink 1s step-end infinite;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      from, to { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    .glow-border {
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    }
+    
+.glow-border {
+  position: relative;
+  animation: shimmer 2s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { box-shadow: 0 0 10px #00ff00; }
+  50% { box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00; }
+  100% { box-shadow: 0 0 10px #00ff00; }
+}
+
+.float-bit {
+  position: absolute;
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 18px;
+  animation: float-down 6s linear infinite;
+  top: -5%;
+}
+
+@keyframes float-down {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(110vh); opacity: 0; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+<style>
+    canvas#matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      background: black;
+    }
+  
+    .flicker {
+      animation: flicker 1.5s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        opacity: 1;
+      }
+      20%, 24%, 55% {
+        opacity: 0.3;
+      }
+    }
+
+    .terminal-cursor::after {
+      content: "_";
+      animation: blink 1s step-end infinite;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      from, to { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    .glow-border {
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    }
+    </style>
+</head>
+<body><div id="binary-overlay"></div>
+<canvas id="matrix-canvas"></canvas>
+<h1 class="flicker terminal-cursor">Image Text Extractor By: ComDotKKH - Himel</h1>
+<input accept="image/*" id="image-input" type="file"/><br/><br/>
+<img class="glow-border" id="preview"/>
+<div id="loading">Processing...</div>
+<div class="glow-border" id="output"></div>
+<script>
+    const imageInput = document.getElementById("image-input");
+    const preview = document.getElementById("preview");
+    const outputDiv = document.getElementById("output");
+    const loadingDiv = document.getElementById("loading");
+
+    imageInput.addEventListener("change", async () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      // Show preview
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+
+      outputDiv.textContent = "";
+      loadingDiv.style.display = "block";
+
+      const worker = await Tesseract.createWorker("eng");
+      const {
+        data: { text }
+      } = await worker.recognize(file);
+
+      outputDiv.textContent = text;
+      loadingDiv.style.display = "none";
+      await worker.terminate();
+    });
+  </script>
+<script>
+  const canvas = document.getElementById("matrix-canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const letters = "01";
+  const fontSize = 14;
+  const columns = canvas.width / fontSize;
+  const drops = Array.from({ length: columns }, () => 1);
+
+  function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#00ff00";
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+      const text = letters[Math.floor(Math.random() * letters.length)];
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+
+      drops[i]++;
+    }
+  }
+
+  setInterval(drawMatrix, 33);
+  window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+</script>
+<script>
+// Typing effect
+const heading = document.querySelector("h1");
+const fullText = heading.innerText;
+heading.innerText = "";
+let i = 0;
+function typeChar() {
+  if (i < fullText.length) {
+    heading.innerText += fullText.charAt(i);
+    i++;
+    setTimeout(typeChar, 75);
+  }
+}
+setTimeout(typeChar, 300);
+
+// Floating binary
+const overlay = document.getElementById("binary-overlay");
+overlay.style.position = "fixed";
+overlay.style.top = "0";
+overlay.style.left = "0";
+overlay.style.width = "100%";
+overlay.style.height = "100%";
+overlay.style.zIndex = "-2";
+overlay.style.overflow = "hidden";
+
+for (let i = 0; i < 30; i++) {
+  const bin = document.createElement("div");
+  bin.innerText = Math.random() > 0.5 ? "0" : "1";
+  bin.className = "float-bit";
+  bin.style.left = Math.random() * 100 + "vw";
+  overlay.appendChild(bin);
+}
+</script></body>
+</html>
