@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Text Extractor</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #output {
+      white-space: pre-wrap;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      min-height: 100px;
+    }
+    #loading {
+      font-size: 18px;
+      color: #007bff;
+      animation: pulse 1.2s infinite;
+    
+      font-weight: bold;
+      margin-top: 20px;
+      display: none;
+    }
+    #preview {
+      max-width: 100%;
+      margin-top: 20px;
+      display: none;
+      border: 1px solid #aaa;
+    }
+  
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+    </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <h1>Image Text Extractor By: ComDotKKH - Himel</h1>
+
+  <input type="file" id="image-input" accept="image/*"><br><br>
+  <img id="preview" />
+  <div id="loading">Processing...</div>
+  <div id="output"></div>
+
+  <script>
+    const imageInput = document.getElementById("image-input");
+    const preview = document.getElementById("preview");
+    const outputDiv = document.getElementById("output");
+    const loadingDiv = document.getElementById("loading");
+
+    imageInput.addEventListener("change", async () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      // Show preview
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+
+      outputDiv.textContent = "";
+      loadingDiv.style.display = "block";
+
+      const worker = await Tesseract.createWorker("eng");
+      const {
+        data: { text }
+      } = await worker.recognize(file);
+
+      outputDiv.textContent = text;
+      loadingDiv.style.display = "none";
+      await worker.terminate();
+    });
+  </script>
+</body>
+</html>
